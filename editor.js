@@ -4,16 +4,34 @@
 
 const canvasWidth = 960;
 const canvasHeight = 500;
-const bg_color = [0,0,0];
+const paletteBackground = [0,0,0];
+const paletteStroke = [22,20,31,255];
+const paletteStrokeShadow = [42,34,37,64];
+const paletteStrokeShadowOffset = 0.35;
 let slider1, slider2, slider3, slider4, slider5;
 let slider6, slider7, slider8, slider9, slider10;
 let faceSelector;
 let faceGuideCheckbox;
 
 let faceArray = [];
+let totalColumns = 7;
+let totalRows = 5;
+let faceScale = 10;
+let faceWidthMinimum = 13.75;
+let faceWidthMaximum = 25;
+let faceHeightMinimum = 16.25;
+let faceHeightMaximum = 30;
+let faceWidth = (faceWidthMinimum + faceWidthMaximum) / 2;
+let faceHeight = (faceHeightMinimum + faceHeightMaximum) / 2;
+let squishFactor;
+let oscillationTime = 5;
+let squishParameter = 3;
+
 let skintonesImage;
+let hairtonesImage;
 function preload() {
     skintonesImage = loadImage('resources/skintones.png');
+    hairtonesImage = loadImage('resources/hairtones.png');
 }
 
 function setup() {
@@ -56,20 +74,20 @@ function setup() {
 
 
 
+    angleMode(DEGREES);
+    rectMode(CENTER);
+    strokeJoin(ROUND);
 
     // Creates a new face
-    createFace();
-
+    faceArray.push(createFace());
 }
-
-
 
 function draw() {
     strokeWeight(0.2);
 
     let mode = faceSelector.value();
 
-    background(bg_color);
+    background(paletteBackground);
 
     let s1 = slider1.value();
     let s2 = slider2.value();
@@ -90,12 +108,25 @@ function draw() {
     let face_y = height / 2;
     let face_x = width / 2;
 
+
+    // creates a "squish factor" between 0 and 1, basically like a sine wave with flatter peaks
+    let oscillationFactor = (millis() / 100) / Math.PI / oscillationTime;
+    squishFactor = (Math.sqrt((1 + squishParameter ** 2) / (1 + squishParameter ** 2 * Math.sin(oscillationFactor) ** 2)) * Math.sin(oscillationFactor));
+
+    // map the squish factor to the face width and height
+    faceWidth = map(squishFactor,-1,1,faceWidthMinimum,faceWidthMaximum);
+    faceHeight = map(squishFactor,-1,1,faceHeightMinimum,faceHeightMaximum);
+    
+
     push();
     translate(face_x, face_y);
     scale(face_scale);
 
     faceArray.forEach(element => {
-        drawFace(element);
+        drawFace(element,true);
+    });
+    faceArray.forEach(element => {
+        drawFace(element,false);
     });
 
     if (show_face_guide) {
